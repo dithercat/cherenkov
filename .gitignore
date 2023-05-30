@@ -101,6 +101,5 @@ test.js
 test.lua
 test.json
 
-!example/*.png
-!example/*.mp3
-example/*.bmp
+!example/**
+example/scriptless/*.bmp
