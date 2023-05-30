@@ -1,0 +1,15 @@
+{
+    "name": "sga_mono",
+    "rules": {
+        "invert": true,
+        "cased": false,
+        "extension": "png",
+        "ranges": [
+            ["a", "z"]
+        ]
+    },
+    "dimensions": {
+        "height": 40,
+        "width": 40
+    }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "@cherenkov/core",
+  "description": "automated databending toolset",
+  "author": "dither",
+  "license": "BSD-2-Clause",
+  "version": "0.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "dependencies": {
+    "@msgpack/msgpack": "^2.7.1",
+    "@types/fluent-ffmpeg": "^2.1.16",
+    "@types/node": "^14.14.25",
+    "canvas": "^2.6.1",
+    "codepage": "^1.15.0",
+    "fluent-ffmpeg": "^2.1.2",
+    "lua-in-js": "^2.2.0",
+    "pixl-canvas-plus": "^2.0.9",
+    "tempfile": "^3.0.0",
+    "web-worker": "^1.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^4.1.5"
+  },
+  "scripts": {
+    "build": "tsc"
+  }
+}

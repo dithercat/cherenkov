@@ -1,0 +1,17 @@
+{
+    "stages": {
+        "connector": "pool",
+        "pipeline": [
+            ["audio", 25],
+            ["image", 5],
+            ["filter", 5],
+            ["cfilter"],
+            ["plasma", 5],
+            ["pattern", 5],
+            ["spectrum", 5],
+            ["splasma", 1],
+            ["spattern", 1],
+            ["sspectrum", 3]
+        ]
+    }
+}

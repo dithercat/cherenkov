@@ -1,0 +1,8 @@
+{
+    "stages": {
+        "connector": "pool",
+        "pipeline": [
+            ["audio"]
+        ]
+    }
+}

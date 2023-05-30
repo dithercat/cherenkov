@@ -1,0 +1,22 @@
+{
+    "options": {
+        "data_format": "u8"
+    },
+    "stages": {
+        "connector": "pool",
+        "pipeline": [
+            ["audio", 25],
+            ["image", 35],
+            ["const", 5],
+            ["rand", 5],
+            ["bend", 5],
+            ["rgb", 5],
+            ["filter", 5],
+            ["cfilter"],
+            ["plasma", 5],
+            ["pattern", 5],
+            ["spectrum", 5],
+            ["canvas", 10]
+        ]
+    }
+}

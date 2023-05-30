@@ -1,0 +1,16 @@
+{
+    "name": "gaia",
+    "rules": {
+        "invert": false,
+        "cased": false,
+        "antialias": false,
+        "extension": "png",
+        "ranges": [
+            ["a", "z"],
+            " ", "?", "!", "."
+        ]
+    },
+    "dimensions": {
+        "height": 22
+    }
+}

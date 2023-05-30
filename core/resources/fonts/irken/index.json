@@ -1,0 +1,15 @@
+{
+    "name": "irken",
+    "rules": {
+        "invert": false,
+        "cased": false,
+        "extension": "png",
+        "ranges": [
+            [" ", " "],
+            ["a", "z"]
+        ]
+    },
+    "dimensions": {
+        "height": 534
+    }
+}

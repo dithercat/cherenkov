@@ -1,0 +1,13 @@
+{
+    "options": {
+        "data_format": "u8"
+    },
+    "stages": {
+        "connector": "pool",
+        "pipeline": [
+            ["image", 20],
+            ["filter", 5],
+            ["cfilter"]
+        ]
+    }
+}

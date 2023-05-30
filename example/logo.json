@@ -1,0 +1,15 @@
+[
+    {
+        "filename": "source/explosionslider.mp3",
+        "type": "audio",
+        "globalOptions": {
+            "channels": 1,
+            "data_rate": 48,
+            "data_format": "u8"
+        }
+    },
+    {
+        "filename": "source/pentagram.png",
+        "type": "image"
+    }
+]

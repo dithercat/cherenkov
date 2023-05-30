@@ -1,0 +1,12 @@
+{
+    "options": {
+        "data_format": "u8"
+    },
+    "stages": {
+        "connector": "pool",
+        "pipeline": [
+            ["audio", 35],
+            ["image", 25]
+        ]
+    }
+}
