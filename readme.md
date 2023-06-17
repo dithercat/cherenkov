@@ -22,7 +22,7 @@ this software was created for personal use; i cannot provide support in using it
 #### manually
 
 - install dependencies
-- build with `cd core;npm install;npm run build;cd ../frontend;npm install;npm run build;cd ..`
+- build with `cd core;yarn;yarn build;cd ../frontend;yarn;yarn build;cd ..`
 - run with `./frontend/dist/cli.js`
 - install with `npm install -g ./frontend`
 

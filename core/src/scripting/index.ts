@@ -4,11 +4,12 @@ import path from "path";
 import { Table, createEnv } from "lua-in-js";
 
 import { RC4 } from "../util/rc4";
-import { PipelineState, PipelineInit, DataType, GlobalOptions, ArrayConnector } from "../pipeline";
+import { PipelineState, PipelineInit, DataType, GlobalOptions, ArrayConnector, BaseConnector } from "../pipeline";
 import { overrideOptions } from "../pipeline/options";
 import { getSuites, getSuite } from "../stages";
-import { println, luascript } from "../util";
-import { tf } from "../transform";
+import { println, luascript, hashObject } from "../util";
+
+import { Cache } from "./cache";
 
 interface ScriptedPipeline {
     name: string;
@@ -54,6 +55,9 @@ function setupLua() {
 export async function executeLuaScript(path: string,
     init: PipelineInit, ...minits: PipelineInit[]) {
 
+    const cache = new Cache(path + ".cache");
+    await cache.init();
+
     println(4, "initial states:", init, minits);
 
     var globalopts: GlobalOptions = overrideOptions(init.globalOptions);
@@ -74,7 +78,8 @@ export async function executeLuaScript(path: string,
         };
     }
 
-    var pipelines: { [key: string]: () => ArrayConnector | Promise<ArrayConnector> } = {};
+    var pipelines: { [key: string]: () => BaseConnector | Promise<BaseConnector> } = {};
+    var hashes: { [key: string]: string } = {};
     var currentPipeline: ScriptedPipeline;
     function resetPipeline() {
         currentPipeline = {
@@ -144,21 +149,33 @@ export async function executeLuaScript(path: string,
             }
             else { result = blank(); }
             println(4, pipeline.stages, globalopts);
-            const connector = new ArrayConnector(
-                {
-                    globalOptions: Object.assign({}, globalopts),
-                    seed: initseed,
-                    buffer: result.buffer, type: result.type
-                },
-                await Promise.all<any>(pipeline.stages.map(async x => {
+            const init: PipelineInit = {
+                globalOptions: Object.assign({}, globalopts),
+                seed: initseed,
+                buffer: result.buffer, type: result.type
+            };
+            const sequence: [string, unknown?][] = await Promise.all<any>(
+                pipeline.stages.map(async x => {
                     const [addr, ctor] = x;
                     var args = null;
                     if (ctor != null) {
                         args = await ctor();
                     }
                     return [addr, args];
-                }))
+                })
             );
+            // need to generate the seed here, else it wont affect the hash
+            if (init.seed == null) {
+                init.seed = RC4.genSeed();
+                println(0, `seed (${pipeline.name}): ${init.seed}`);
+            }
+            // generate unique hash dependent on seed, parent pipelines, etc
+            const hash = hashObject(init, sequence);
+            println(2, "pipeline hash", hash);
+            hashes[pipeline.name] = hash;
+            println(4, "initializing ArrayConnector", init, sequence);
+            const connector = await cache.loadOrInit(pipeline.name, hash, init, sequence);
+            println(4, "connector:", connector);
             pipelines[pipeline.name] = () => connector;
             return connector;
         };

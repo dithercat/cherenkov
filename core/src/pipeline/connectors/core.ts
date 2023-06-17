@@ -6,7 +6,9 @@ import { PipelineState, PipelineStage, PipelineInit } from ".."
 import { overrideOptions } from "../options";
 
 export abstract class BaseConnector {
-    readonly state: PipelineState;
+    protected _state: PipelineState;
+    get state() { return this._state; }
+
     private substates: PipelineState[] = [];
     private prestage: PipelineStage<unknown>[] = [];
     private poststage: PipelineStage<unknown>[] = [];
@@ -17,7 +19,7 @@ export abstract class BaseConnector {
         if (init.buffer == null) throw new Error("need buffer to init pipeline");
         const type = init.type != null ? init.type : DataType.Binary;
         this.realInitialType = type;
-        this.state = {
+        this._state = {
             globalOptions: overrideOptions(init.globalOptions),
             buffer: init.buffer, previousBuffer: null,
             type, initialType: type,
@@ -25,7 +27,9 @@ export abstract class BaseConnector {
             history: [],
             rng: new RC4(init.seed == null ? RC4.genSeed() : init.seed)
         };
-        println(0, "seed: " + this.state.rng.seed);
+        if (init.seed == null) {
+            println(0, "seed: " + this.state.rng.seed);
+        }
         if (init.midstage != null) {
             if (init.midstage.pre != null) this.prestage = this.prestage.concat(init.midstage.pre);
             if (init.midstage.post != null) this.poststage = this.poststage.concat(init.midstage.post);

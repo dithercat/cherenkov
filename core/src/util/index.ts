@@ -8,3 +8,4 @@ export * from "./synth";
 export * from "./lazyplus";
 export * from "./resource";
 export * from "./math";
+export * from "./hash";
