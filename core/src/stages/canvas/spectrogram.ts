@@ -1,3 +1,5 @@
+import { CanvasRenderingContext2D } from "canvas";
+
 import { canvasDo } from "../../util";
 import { DataType, GlobalOptions } from "../../pipeline";
 import { bin2wav } from "../../transform/wav";

@@ -38,3 +38,4 @@ import "./fluidcoast";
 import "./keysmash";
 import "./tone";
 import "./list";
+import "./sdwebui";

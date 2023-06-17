@@ -1,3 +1,5 @@
+import { ImageData } from "canvas";
+
 import { roll, canvasDo } from "../../util";
 import { PipelineState, DataType } from "../../pipeline";
 import { registerStage } from "../../stages";

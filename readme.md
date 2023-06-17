@@ -13,8 +13,9 @@ this software was created for personal use; i cannot provide support in using it
 - node
 - ffmpeg
 - imagemagick
-- wine
-- xvfb
+- wine (optional, needed for dectalk)
+- xvfb (optional, needed for dectalk)
+- stable-diffusion-webui (optional, needed for stable diffusion, start with `--api`)
 
 ### install instructions
 

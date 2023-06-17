@@ -6,6 +6,13 @@ import { tf } from "../transform";
 import { toBmp, flip45, println } from "../util";
 import { RC4 } from "../util/rc4";
 
+registerStage("util", "dump", {
+    type: DataType.Any,
+    run(state, args) {
+        console.debug(state.buffer.toString());
+    }
+})
+
 registerStage("util", "setopt", {
     type: DataType.Image,
     run(state, args: Partial<GlobalOptions>) {

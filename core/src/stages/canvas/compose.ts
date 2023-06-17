@@ -78,7 +78,7 @@ async function runGenerator(state: PipelineState, ctx: CanvasRenderingContext2D,
     }
 
     if (typeof source === "object") {
-        tctx.drawImage(source);
+        tctx.drawImage(source, 0, 0);
         return tmp;
     }
 
