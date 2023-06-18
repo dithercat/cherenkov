@@ -87,10 +87,15 @@ export async function ff(input: Buffer, cfg: ConfiguratorAction = x => x, temp =
             if (tempin) await promisify(fs.unlink)(tmpin);
             resolve(buff);
         });
-        const config = cfg(ffmpeg({ source/*, logger: console*/ })
+        const config = cfg(ffmpeg({
+            //logger: console,
+            source
+        })
             .outputOption("-fflags", "+bitexact")
             .outputOption("-flags:a", "+bitexact")
-        ).on("error", reject);
+        )
+            //.on("start", cmdline => console.debug(cmdline))
+            .on("error", reject);
         config.stream(stream, { end: true });
     });
 }

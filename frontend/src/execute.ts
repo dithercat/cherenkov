@@ -79,7 +79,8 @@ export async function runConfig(config: Partial<ProgramConfig>) {
             //println(3, rinits);
         }
         const rinit = rinits.shift();
-        finalState = await executeLuaScript(config.luascript, rinit, ...rinits);
+        finalState = await executeLuaScript(config.luascript, config.cached,
+            rinit, ...rinits);
     }
     else {
         const executor = assembleConnector(init, config.stages);

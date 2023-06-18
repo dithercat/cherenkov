@@ -11,6 +11,10 @@ OPTIONS = cherenkov.globalOptions
 start = cherenkov.start
 stop = cherenkov.stop
 seed = cherenkov.seed
+seal = cherenkov.seal
+bounce = cherenkov.bounce
+yield = cherenkov.yield
+free = cherenkov.free
 
 function println(n, ...)
     sys.println(n, "[lua]", ...)
@@ -19,7 +23,7 @@ end
 _DEFERRED = {}
 
 local index = 0
-function pipeline(func, name, defer)
+function pipeline(func, name, defer, rseed)
     if type(func) ~= "function" then
         error("invalid pipeline function")
     end
@@ -29,6 +33,9 @@ function pipeline(func, name, defer)
     end
     local function go()
         println(2, "compiling " .. name)
+        if rseed then
+            seed(rseed)
+        end
         start(name)
         func()
         stop()
@@ -42,28 +49,36 @@ function pipeline(func, name, defer)
     return name
 end
 
-function output(func)
-    pipeline(func, "@output")
+function output(func, seed)
+    return pipeline(func, "@output", false, seed)
 end
 
-function from(sym)
+function from(sym, seed)
     if type(sym) == "function" then
-        sym = pipeline(sym, nil, true)
+        sym = pipeline(sym, nil, true, seed)
     end
     if type(sym) ~= "string" then
         error("invalid push (must be function or string)")
     end
     cherenkov.from(sym)
+    return sym
 end
 
-function push(sym)
+function push(sym, seed)
     if type(sym) == "function" then
-        sym = pipeline(sym, nil, true)
+        sym = pipeline(sym, nil, true, seed)
     end
     if type(sym) ~= "string" then
         error("invalid push (must be function or string)")
     end
     cherenkov.push(sym)
+    return sym
+end
+
+function run(sym, seed)
+    push(sym, seed)
+    cherenkov.flush()
+    return sym
 end
 
 function as(ty)

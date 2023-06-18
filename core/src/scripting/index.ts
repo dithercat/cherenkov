@@ -4,7 +4,7 @@ import path from "path";
 import { Table, createEnv } from "lua-in-js";
 
 import { RC4 } from "../util/rc4";
-import { PipelineState, PipelineInit, DataType, GlobalOptions, ArrayConnector, BaseConnector } from "../pipeline";
+import { PipelineState, PipelineInit, DataType, GlobalOptions, ArrayConnector, BaseConnector, PipelineStage } from "../pipeline";
 import { overrideOptions } from "../pipeline/options";
 import { getSuites, getSuite } from "../stages";
 import { println, luascript, hashObject } from "../util";
@@ -13,9 +13,8 @@ import { Cache } from "./cache";
 
 interface ScriptedPipeline {
     name: string;
-    stages: [string, () => unknown][];
+    stages: (PipelineStage<unknown> | [string, () => unknown])[];
     pendingFlush: boolean;
-    source: string;
 }
 
 function setupLua() {
@@ -52,16 +51,23 @@ function setupLua() {
     };
 }
 
-export async function executeLuaScript(path: string,
+export async function executeLuaScript(path: string, cached: boolean,
     init: PipelineInit, ...minits: PipelineInit[]) {
 
-    const cache = new Cache(path + ".cache");
-    await cache.init();
+    const cache = cached ? new Cache(path + ".cache") : null;
+    if (cached) {
+        await cache.init();
+    }
 
     println(4, "initial states:", init, minits);
 
     var globalopts: GlobalOptions = overrideOptions(init.globalOptions);
     var initseed: string = init.seed;
+
+    if (initseed == null) {
+        initseed = RC4.genSeed();
+        println(0, `seed: ${initseed}`);
+    }
 
     function seed(str: string) {
         initseed = str;
@@ -79,20 +85,44 @@ export async function executeLuaScript(path: string,
     }
 
     var pipelines: { [key: string]: () => BaseConnector | Promise<BaseConnector> } = {};
-    var hashes: { [key: string]: string } = {};
+    var resolved: { [key: string]: BaseConnector } = {};
     var currentPipeline: ScriptedPipeline;
     function resetPipeline() {
         currentPipeline = {
             name: null,
             stages: [],
-            pendingFlush: false,
-            source: null
+            pendingFlush: false
         };
     }
     resetPipeline();
 
+    async function get(name: string): Promise<BaseConnector> {
+        if (name in resolved) {
+            return resolved[name];
+        }
+        if (!(name in pipelines)) {
+            throw new Error("attempt to reference undefined pipeline " + name);
+        }
+        const pipeline = await pipelines[name]();
+        resolved[name] = pipeline;
+        return pipeline;
+    }
+
     function from(source: string): void {
-        currentPipeline.source = source;
+        if (source == null) {
+            throw new Error("from source must be string");
+        }
+        currentPipeline.stages.push({
+            id: "from",
+            suite: "internal",
+            type: DataType.Any,
+            init: (state, args) => args,
+            run: async (state: PipelineState) => {
+                const src = await get(source);
+                const nstate = await src.iterateToEnd();
+                Object.assign(state, nstate);
+            }
+        });
     }
 
     function push(source: string): void {
@@ -104,12 +134,24 @@ export async function executeLuaScript(path: string,
             if (typeof source !== "string") {
                 throw new Error("invalid push");
             }
-            if (!(source in pipelines)) {
-                throw new Error("attempt to reference undefined pipeline " + source);
-            }
-            //println(4, source, pipelines[source]);
-            return { pipeline: await pipelines[source]() };
+            return { pipeline: await get(source) };
         }]);
+    }
+
+    function free(source: string): void {
+        if (source == null) {
+            throw new Error("push source must be string");
+        }
+        currentPipeline.stages.push({
+            id: "free",
+            suite: "internal",
+            type: DataType.Any,
+            init: (state, args) => args,
+            run: async (state: PipelineState) => {
+                delete pipelines[source];
+                delete resolved[source];
+            }
+        });
     }
 
     function flush() {
@@ -121,6 +163,31 @@ export async function executeLuaScript(path: string,
 
     function seal() {
         currentPipeline.stages.push(["util.seal", null]);
+    }
+
+    // terrible workaround for format inconsistency bugs
+    function bounce() {
+        currentPipeline.stages.push({
+            id: "bounce",
+            suite: "internal",
+            type: DataType.Binary,
+            init: (state, args) => args,
+            run: async () => { }
+        });
+    }
+
+    var yields = 0;
+    function _yield(type: DataType) {
+        currentPipeline.stages.push({
+            id: "yield",
+            suite: "internal",
+            type,
+            init: (state, args) => args,
+            run: async (state: PipelineState) => {
+                //console.debug(state);
+                fs.writeFileSync(path + (yields++).toString().padStart(8, "0"), state.buffer);
+            }
+        });
     }
 
     function start(name: string): void {
@@ -138,24 +205,20 @@ export async function executeLuaScript(path: string,
             throw new Error("attempt to terminate an unnamed pipeline?");
         flush();
         println(4, "pipeline compile ending", pipeline);
+        const seed = initseed;
         pipelines[pipeline.name] = async () => {
             println(4, "setting up pipeline", pipeline.name);
             var result: PipelineState;
-            if (pipeline.source != null) {
-                if (!(pipeline.source in pipelines)) {
-                    throw new Error("attempt to reference undefined pipeline " + pipeline.source);
-                }
-                result = await (await pipelines[pipeline.source]()).iterateToEnd();
-            }
-            else { result = blank(); }
+            result = blank();
             println(4, pipeline.stages, globalopts);
             const init: PipelineInit = {
                 globalOptions: Object.assign({}, globalopts),
-                seed: initseed,
+                seed,
                 buffer: result.buffer, type: result.type
             };
             const sequence: [string, unknown?][] = await Promise.all<any>(
                 pipeline.stages.map(async x => {
+                    if (!Array.isArray(x)) { return x; }
                     const [addr, ctor] = x;
                     var args = null;
                     if (ctor != null) {
@@ -164,17 +227,11 @@ export async function executeLuaScript(path: string,
                     return [addr, args];
                 })
             );
-            // need to generate the seed here, else it wont affect the hash
-            if (init.seed == null) {
-                init.seed = RC4.genSeed();
-                println(0, `seed (${pipeline.name}): ${init.seed}`);
-            }
             // generate unique hash dependent on seed, parent pipelines, etc
-            const hash = hashObject(init, sequence);
-            println(2, "pipeline hash", hash);
-            hashes[pipeline.name] = hash;
-            println(4, "initializing ArrayConnector", init, sequence);
-            const connector = await cache.loadOrInit(pipeline.name, hash, init, sequence);
+            println(4, "initializing ArrayConnector", init);
+            const connector = pipeline.name !== "@output" && cached
+                ? await cache.loadOrInit(pipeline.name, hashObject(init, sequence), init, sequence)
+                : new ArrayConnector(init, sequence);
             println(4, "connector:", connector);
             pipelines[pipeline.name] = () => connector;
             return connector;
@@ -193,7 +250,7 @@ export async function executeLuaScript(path: string,
                 println(4, "push", name, rargs);
                 currentPipeline.stages.push([suite + "." + name, () => rargs]);
                 // automatically seal type if the pipeline is empty and there's no source
-                if (currentPipeline.stages.length === 1 && currentPipeline.source == null) {
+                if (currentPipeline.stages.length === 1) {
                     seal();
                 }
                 flush();
@@ -206,7 +263,7 @@ export async function executeLuaScript(path: string,
     const env = lua.env;
 
     env.loadLib("cherenkov", new Table({
-        start, stop, from, push, seed,
+        start, stop, from, push, flush, seed, seal, bounce, yield: _yield, free,
         options: new Table(globalopts)
     }));
     env.loadLib("stage", new Table(stage));

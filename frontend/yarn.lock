@@ -2,21 +2,9 @@
 # yarn lockfile v1
 
 
-"@cherenkov/core@file:../core":
+"@cherenkov/core@link:../core":
   version "0.0.0"
-  dependencies:
-    "@types/fluent-ffmpeg" "^2.1.16"
-    "@types/node" "^14.14.25"
-    canvas "^2.6.1"
-    codepage "^1.15.0"
-    fluent-ffmpeg "^2.1.2"
-    lua-in-js "^2.2.0"
-    msgpack-lite "^0.1.26"
-    pixl-canvas-plus "^2.0.9"
-    sequelize "^6.32.0"
-    sqlite3 "^5.1.6"
-    tempfile "^3.0.0"
-    web-worker "^1.1.0"
+  uid ""
 
 "@gar/promisify@^1.0.1":
   version "1.1.3"

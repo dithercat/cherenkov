@@ -7,4 +7,5 @@ import "./text";
 import "./tts";
 import "./util";
 import "./stack";
+import "./afilter";
 import "../sources";

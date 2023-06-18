@@ -7,7 +7,7 @@
   "private": true,
   "main": "dist/index.js",
   "dependencies": {
-    "@cherenkov/core": "file:../core",
+    "@cherenkov/core": "link:../core",
     "commander": "^7.0.0"
   },
   "devDependencies": {

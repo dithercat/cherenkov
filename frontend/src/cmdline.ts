@@ -58,6 +58,7 @@ export async function runCmdline(args: string[]): Promise<void> {
             if (!existsSync(v)) throw new InvalidOptionArgumentError("script does not exist");
             return v;
         })
+        .option("-c|--cache", "use pipeline result cache")
         .option("-v", "increase verbosity", () => setLogLevel(getLogLevel() + 1))
 
     const opts = program.parse(args).opts();
@@ -71,7 +72,8 @@ export async function runCmdline(args: string[]): Promise<void> {
         prestages: opts.prestage,
         poststages: opts.poststage,
         options: opts.option,
-        luascript: opts.script
+        luascript: opts.script,
+        cached: opts.cache
     };
 
     await runConfig(config);

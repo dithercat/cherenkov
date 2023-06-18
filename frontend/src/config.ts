@@ -15,4 +15,5 @@ export interface ProgramConfig {
     poststages?: PipelineStage<unknown>[];
     stages: StageConfig;
     luascript?: string;
+    cached?: boolean;
 }

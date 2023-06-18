@@ -14,7 +14,7 @@ registerStage("util", "dump", {
 })
 
 registerStage("util", "setopt", {
-    type: DataType.Image,
+    type: DataType.Binary,
     run(state, args: Partial<GlobalOptions>) {
         Object.assign(state.globalOptions, args);
     }

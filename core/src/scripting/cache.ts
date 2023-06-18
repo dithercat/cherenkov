@@ -22,6 +22,7 @@ export class Cache {
 
     private readonly sql: Sequelize;
     private readonly cache: ModelStatic<Model<any, any>>;
+    private hasinited = false;
 
     constructor(storage: string) {
         this.sql = new Sequelize({
@@ -47,8 +48,10 @@ export class Cache {
     }
 
     async init() {
+        if (this.hasinited) { return; }
         await this.sql.authenticate();
         await this.cache.sync();
+        this.hasinited = true;
     }
 
     async loadOrInit(

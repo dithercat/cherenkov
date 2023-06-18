@@ -172,5 +172,7 @@ registerStage("sd", "img2img", {
         args.prompt = args.prompt_prefix + ", " + args.prompt;
         state.buffer = await generate(args, state.buffer);
         state.initialType = DataType.Image;
+        state.globalOptions.width = args.width;
+        state.globalOptions.height = args.height;
     }
 });
